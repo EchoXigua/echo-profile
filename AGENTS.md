@@ -44,3 +44,14 @@
 - 完成页面改动后至少运行 `pnpm build`。
 - 结构或内容变更后运行 `pnpm test`。
 - 交互和动画改动需要检查键盘、触摸、移动端和减少动态效果。
+
+## Blender modeling standards
+
+- Primitive meshes are allowed only during blockout.
+- Final visible organic surfaces must not be overlapping primitive assemblies.
+- Use connected topology, remeshing, sculpting, or edited edge loops for continuous forms.
+- Build detail at silhouette, structural, and surface levels.
+- Render clay, wireframe, and material previews from four angles.
+- Inspect renders and perform at least one refinement pass before completion.
+- Preserve staged `.blend` files.
+- Report polygon count, modifier stack, materials, unresolved intersections, and export validation.

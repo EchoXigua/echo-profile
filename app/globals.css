@@ -236,9 +236,16 @@ a {
   mask-image: radial-gradient(circle, #000 15%, transparent 70%);
 }
 
-.scene-shell canvas {
+.scene-shell > div {
   position: absolute !important;
   inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.scene-shell canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .card-grid {

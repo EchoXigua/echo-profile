@@ -13,7 +13,12 @@ Echo 的独立个人主页项目，用于求职、工作合作、AI 能力展示
 - Next.js / React / TypeScript
 - React Three Fiber / Three.js
 - GSAP
-- vinext / Cloudflare Workers 兼容构建
+- Next.js 静态导出 / Nginx 自托管
+
+## 环境要求
+
+- Node.js `>=20.9.0`
+- pnpm `10.34.5`
 
 ## 目录
 
@@ -33,6 +38,7 @@ types/                内容类型
 ## 本地开发
 
 ```bash
+corepack enable
 pnpm install
 pnpm dev
 ```
@@ -43,6 +49,14 @@ pnpm dev
 pnpm check
 ```
 
+## 构建与部署
+
+```bash
+pnpm build
+```
+
+构建结果位于 `out/`，可以直接交给 Nginx、Caddy 或其他静态文件服务器托管。自有服务器部署示例见 [`docs/deployment.md`](docs/deployment.md)。
+
 ## 当前状态
 
-基础架构已建立，并包含一个可运行的 3D 场景占位。最终视觉、滚动动画、项目素材、联系方式、简历和正式域名将在后续阶段完善。
+基础架构已建立，并包含一个可运行的 3D 场景占位。项目使用标准 Next.js 静态导出，不依赖 Cloudflare Workers 或常驻 Node.js 服务。最终视觉、滚动动画、项目素材、联系方式、简历和正式域名将在后续阶段完善。

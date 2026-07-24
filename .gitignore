@@ -15,12 +15,13 @@
 
 # next.js
 /.next/
-/.vinext/
 /out/
 
 # misc
 .DS_Store
 *.pem
+*.blend1
+.codex-tmp/
 
 # debug
 npm-debug.log*
@@ -36,7 +37,3 @@ yarn-error.log*
 
 # typescript
 next-env.d.ts
-/dist/
-/.wrangler/
-/outputs/
-/work/
