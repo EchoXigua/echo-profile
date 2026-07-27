@@ -1,6 +1,7 @@
 export const navigation = [
   { label: "关于", href: "#about" },
-  { label: "AI 能力", href: "#capabilities" },
-  { label: "项目", href: "#projects" },
+  { label: "工程", href: "#engineering" },
+  { label: "LeanMate", href: "#leanmate" },
+  { label: "Voya", href: "#voya" },
   { label: "联系", href: "#contact" },
 ] as const;
