@@ -1,0 +1,204 @@
+{
+  "source": "/Users/edy/Documents/Echo主页/public/models/astronaut-lusion-animated.glb",
+  "file_size_bytes": 12234004,
+  "blender_version": "5.2.0 LTS",
+  "scene": {
+    "objects": 2,
+    "object_types": {
+      "ARMATURE": 1,
+      "MESH": 1
+    },
+    "mesh_objects": 1,
+    "bounds_min": [
+      -0.18356,
+      -0.26889,
+      0.00186
+    ],
+    "bounds_max": [
+      0.14074,
+      0.28192,
+      1.0
+    ],
+    "dimensions": [
+      0.32431,
+      0.55081,
+      0.99814
+    ]
+  },
+  "totals": {
+    "vertices": 18276,
+    "edges": 50890,
+    "faces": 32672,
+    "triangles": 32672,
+    "boundary_edges": 3764,
+    "non_manifold_edges": 0,
+    "degenerate_faces": 0
+  },
+  "meshes": [
+    {
+      "name": "tripo_node_ff97da5c-fc7f-4555-9e7e-ef4ebebe8783",
+      "mesh": "tripo_mesh_ff97da5c-fc7f-4555-9e7e-ef4ebebe8783",
+      "topology": {
+        "vertices": 18276,
+        "edges": 50890,
+        "faces": 32672,
+        "triangles": 32672,
+        "boundary_edges": 3764,
+        "non_manifold_edges": 0,
+        "degenerate_faces": 0
+      },
+      "material_slots": [
+        "tripo_mat_ff97da5c-fc7f-4555-9e7e-ef4ebebe8783"
+      ],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "dimensions": [
+        0.32431,
+        0.55081,
+        0.99814
+      ],
+      "shape_keys": 0
+    }
+  ],
+  "materials": [
+    {
+      "name": "tripo_mat_ff97da5c-fc7f-4555-9e7e-ef4ebebe8783",
+      "use_nodes": true,
+      "surface_render_method": "DITHERED",
+      "node_types": [
+        "ShaderNodeBsdfPrincipled",
+        "ShaderNodeNormalMap",
+        "ShaderNodeOutputMaterial",
+        "ShaderNodeSeparateColor",
+        "ShaderNodeTexImage"
+      ]
+    }
+  ],
+  "images": [
+    {
+      "name": "astronaut-rigged_glb_basecolor",
+      "size": [
+        2048,
+        2048
+      ],
+      "source": "FILE",
+      "packed": true,
+      "filepath": "",
+      "colorspace": "sRGB"
+    },
+    {
+      "name": "astronaut-rigged_glb_normal",
+      "size": [
+        2048,
+        2048
+      ],
+      "source": "FILE",
+      "packed": true,
+      "filepath": "",
+      "colorspace": "Non-Color"
+    },
+    {
+      "name": "astronaut-rigged_glb_rm",
+      "size": [
+        2048,
+        2048
+      ],
+      "source": "FILE",
+      "packed": true,
+      "filepath": "",
+      "colorspace": "Non-Color"
+    },
+    {
+      "name": "Render Result",
+      "size": [
+        0,
+        0
+      ],
+      "source": "VIEWER",
+      "packed": false,
+      "filepath": "",
+      "colorspace": ""
+    },
+    {
+      "name": "Viewer Node",
+      "size": [
+        256,
+        256
+      ],
+      "source": "VIEWER",
+      "packed": false,
+      "filepath": "",
+      "colorspace": ""
+    }
+  ],
+  "armatures": [
+    {
+      "name": "Armature",
+      "bones": 41
+    }
+  ],
+  "actions": [
+    {
+      "name": "EchoPointerClick",
+      "frame_range": [
+        0.0,
+        16.8
+      ],
+      "slots": 1
+    },
+    {
+      "name": "EchoPointerSweep",
+      "frame_range": [
+        0.0,
+        72.0
+      ],
+      "slots": 1
+    },
+    {
+      "name": "EchoPointerWave",
+      "frame_range": [
+        0.0,
+        72.0
+      ],
+      "slots": 1
+    },
+    {
+      "name": "EchoScrollStory",
+      "frame_range": [
+        0.0,
+        288.0
+      ],
+      "slots": 1
+    },
+    {
+      "name": "EchoZeroGIdle",
+      "frame_range": [
+        0.0,
+        192.0
+      ],
+      "slots": 1
+    }
+  ],
+  "modifiers": [
+    {
+      "object": "tripo_node_ff97da5c-fc7f-4555-9e7e-ef4ebebe8783",
+      "name": "Armature",
+      "type": "ARMATURE"
+    }
+  ],
+  "cameras": [],
+  "lights": []
+}
