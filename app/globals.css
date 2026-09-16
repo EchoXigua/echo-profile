@@ -143,9 +143,20 @@ button:focus-visible {
   height: 100% !important;
 }
 
+.scene-flash {
+  z-index: 3;
+  background:
+    radial-gradient(circle at center, rgb(255 255 255 / 100%) 0%, rgb(224 248 255 / 98%) 38%, rgb(149 220 255 / 62%) 66%, transparent 100%);
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  transform-origin: center;
+  will-change: opacity, transform;
+}
+
 .scene-caption {
   position: absolute;
-  z-index: 3;
+  z-index: 4;
   right: 28px;
   bottom: 22px;
   margin: 0;

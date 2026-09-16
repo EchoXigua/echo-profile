@@ -1,8 +1,16 @@
 "use client";
 
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import {
+  Bloom,
+  ChromaticAberration,
+  EffectComposer,
+  Noise,
+  Vignette,
+} from "@react-three/postprocessing";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+import { BlendFunction } from "postprocessing";
 import {
   Suspense,
   useCallback,
@@ -20,25 +28,37 @@ import {
   BufferGeometry,
   CatmullRomCurve3,
   Color,
+  DoubleSide,
   Group,
   Interpolant,
   Line,
   LineBasicMaterial,
+  Material,
   MathUtils,
   Mesh,
   MeshBasicMaterial,
+  MeshPhysicalMaterial,
   MeshStandardMaterial,
   Object3D,
   PerspectiveCamera,
+  PointLight,
   Points,
   PointsMaterial,
   Quaternion,
+  ShaderMaterial,
   SRGBColorSpace,
   TextureLoader,
+  Vector2,
   Vector3,
 } from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
+import {
+  createMasterTimelineSample,
+  sampleMasterTimeline,
+  sampleTimelineBackground,
+} from "@/components/scene/lusionTimeline";
 
 type PointerTarget = {
   x: number;
@@ -185,225 +205,21 @@ function applyAbsolutePoseAnimationLayer(
   });
 }
 
-type StagePose = {
-  astronaut: {
-    x: number;
-    y: number;
-    z: number;
-    rx: number;
-    ry: number;
-    rz: number;
-    scale: number;
-  };
-  camera: {
-    x: number;
-    y: number;
-    z: number;
-    lookX: number;
-    lookY: number;
-    lookZ: number;
-    fov: number;
-  };
-  station: {
-    x: number;
-    y: number;
-    z: number;
-    rx: number;
-    ry: number;
-    rz: number;
-    scale: number;
-  };
-};
-
-const STAGE_COUNT = 6;
-const STAGE_POSES: readonly StagePose[] = [
-  {
-    astronaut: {
-      x: 2.55,
-      y: -0.34,
-      z: 0.38,
-      rx: 0.08,
-      ry: -0.12,
-      rz: -0.04,
-      scale: 1.34,
-    },
-    camera: {
-      x: 0,
-      y: 0.05,
-      z: 8.4,
-      lookX: 0.35,
-      lookY: 0.06,
-      lookZ: -0.25,
-      fov: 42,
-    },
-    station: {
-      x: 1.35,
-      y: 0.08,
-      z: -2.7,
-      rx: 0.04,
-      ry: -0.18,
-      rz: -0.18,
-      scale: 3.45,
-    },
-  },
-  {
-    astronaut: {
-      x: 0.95,
-      y: -0.26,
-      z: 1.08,
-      rx: 0.04,
-      ry: 0.12,
-      rz: 0.08,
-      scale: 1.82,
-    },
-    camera: {
-      x: -0.54,
-      y: 0.2,
-      z: 7.5,
-      lookX: 0.18,
-      lookY: 0.18,
-      lookZ: -0.52,
-      fov: 39,
-    },
-    station: {
-      x: 0.55,
-      y: -0.08,
-      z: -3.4,
-      rx: 0.05,
-      ry: 0.16,
-      rz: 0.06,
-      scale: 3.8,
-    },
-  },
-  {
-    astronaut: {
-      x: -0.72,
-      y: -0.1,
-      z: -0.18,
-      rx: 1.38,
-      ry: -0.45,
-      rz: -1.12,
-      scale: 1.28,
-    },
-    camera: {
-      x: 0.54,
-      y: 0.1,
-      z: 7.05,
-      lookX: 0.24,
-      lookY: 0,
-      lookZ: -0.9,
-      fov: 41,
-    },
-    station: {
-      x: 2.9,
-      y: -1.1,
-      z: -4.8,
-      rx: 0.32,
-      ry: 1.16,
-      rz: -0.26,
-      scale: 3.05,
-    },
-  },
-  {
-    astronaut: {
-      x: 1.08,
-      y: 0.02,
-      z: -0.52,
-      rx: 1.22,
-      ry: 0.2,
-      rz: -1.42,
-      scale: 1.1,
-    },
-    camera: {
-      x: -0.72,
-      y: 0.46,
-      z: 6.65,
-      lookX: 0.22,
-      lookY: 0.16,
-      lookZ: -1.35,
-      fov: 40,
-    },
-    station: {
-      x: -3.3,
-      y: -0.8,
-      z: -5.2,
-      rx: -0.18,
-      ry: 1.72,
-      rz: 0.12,
-      scale: 2.6,
-    },
-  },
-  {
-    astronaut: {
-      x: -1.2,
-      y: 0.25,
-      z: -0.44,
-      rx: 1.5,
-      ry: -0.25,
-      rz: -1.24,
-      scale: 1.18,
-    },
-    camera: {
-      x: 0.84,
-      y: 0.58,
-      z: 6.9,
-      lookX: -0.08,
-      lookY: 0.2,
-      lookZ: -1.05,
-      fov: 42,
-    },
-    station: {
-      x: 3.4,
-      y: 0.4,
-      z: -5.5,
-      rx: 0.16,
-      ry: 2.25,
-      rz: -0.16,
-      scale: 2.2,
-    },
-  },
-  {
-    astronaut: {
-      x: 0.62,
-      y: -0.44,
-      z: 0.4,
-      rx: 0.02,
-      ry: 0.04,
-      rz: 0.01,
-      scale: 1.7,
-    },
-    camera: {
-      x: 0,
-      y: 0.08,
-      z: 8.05,
-      lookX: 0.36,
-      lookY: 0.04,
-      lookZ: -0.42,
-      fov: 43,
-    },
-    station: {
-      x: 0,
-      y: -3.6,
-      z: -7,
-      rx: 0,
-      ry: 2.8,
-      rz: 0,
-      scale: 1.8,
-    },
-  },
-] as const;
-
-const PALETTE = {
-  hero: new Color("#020508"),
-  about: new Color("#05070a"),
-  engineering: new Color("#071008"),
-  leanmate: new Color("#03130d"),
-  voya: new Color("#060814"),
-  contact: new Color("#080a10"),
-};
-
-const TMP_COLOR_A = new Color();
-const TMP_COLOR_B = new Color();
+const DOM_STAGE_COUNT = 6;
+const TIMELINE_BACKGROUND = new Color();
+const TUNNEL_WHITE = new Color("#eaf7ff");
+const TUNNEL_CYAN = new Color("#55e9ff");
+const TUNNEL_RED = new Color("#ff355e");
+const TUNNEL_GREEN = new Color("#78ffab");
+const TUNNEL_MAGENTA = new Color("#ff4ac3");
+const TUNNEL_DARK = new Color("#25353b");
+const TUNNEL_RED_DARK = new Color("#38111d");
+const TUNNEL_GREEN_DARK = new Color("#103825");
+const TUNNEL_MAGENTA_DARK = new Color("#3a102f");
+const TUNNEL_WHITE_EMISSIVE = new Color("#27434f");
+const TUNNEL_RED_EMISSIVE = new Color("#5c1629");
+const TUNNEL_GREEN_EMISSIVE = new Color("#1c7045");
+const TUNNEL_MAGENTA_EMISSIVE = new Color("#6e0f55");
 
 function seededRandom(seed: number) {
   const value = Math.sin(seed * 12.9898) * 43758.5453;
@@ -422,19 +238,38 @@ function smoothRange(
   return Math.min(fadeIn, fadeOut);
 }
 
-function sampleStagePose(progress: number) {
-  const lowerIndex = Math.min(
-    STAGE_POSES.length - 2,
-    Math.max(0, Math.floor(progress)),
-  );
-  const upperIndex = lowerIndex + 1;
-  const rawT = MathUtils.clamp(progress - lowerIndex, 0, 1);
-  const t = rawT * rawT * (3 - 2 * rawT);
-  return {
-    lower: STAGE_POSES[lowerIndex],
-    upper: STAGE_POSES[upperIndex],
-    t,
-  };
+function mergeAssetByMaterial(
+  root: Object3D,
+  resolveMaterial: (name: string) => Material | null,
+) {
+  root.updateMatrixWorld(true);
+  const buckets = new Map<
+    Material,
+    { geometries: BufferGeometry[]; names: string[] }
+  >();
+  root.traverse((object) => {
+    if (!(object instanceof Mesh)) return;
+    const material = resolveMaterial(object.name);
+    if (!material) return;
+    const bucket = buckets.get(material) ?? { geometries: [], names: [] };
+    const geometry = object.geometry.clone();
+    geometry.applyMatrix4(object.matrixWorld);
+    bucket.geometries.push(geometry);
+    bucket.names.push(object.name);
+    buckets.set(material, bucket);
+  });
+
+  const group = new Group();
+  buckets.forEach(({ geometries, names }, material) => {
+    const geometry = mergeGeometries(geometries, false);
+    geometries.forEach((item) => item.dispose());
+    if (!geometry) return;
+    const mesh = new Mesh(geometry, material);
+    mesh.name = names.join("__");
+    mesh.frustumCulled = false;
+    group.add(mesh);
+  });
+  return group;
 }
 
 function usePrefersReducedMotion() {
@@ -646,7 +481,8 @@ function OrbitalLines({
 
   useFrame(() => {
     if (!groupRef.current) return;
-    const fade = 1 - MathUtils.smoothstep(storyState.current.progress, 0.75, 1.9);
+    const fade =
+      1 - MathUtils.smoothstep(storyState.current.progress, 0.08, 0.28);
     groupRef.current.visible = fade > 0.01;
     lines.forEach((line, index) => {
       (line.material as LineBasicMaterial).opacity =
@@ -663,6 +499,189 @@ function OrbitalLines({
   );
 }
 
+function OpticalFlares({
+  pointerTarget,
+  storyState,
+  reducedMotion,
+}: {
+  pointerTarget: MutableRefObject<PointerTarget>;
+  storyState: MutableRefObject<StoryState>;
+  reducedMotion: boolean;
+}) {
+  const groupRef = useRef<Group>(null);
+  const color = useMemo(() => new Color("#dff8ff"), []);
+  const material = useMemo(
+    () =>
+      new ShaderMaterial({
+        uniforms: {
+          uColor: { value: color },
+          uOpacity: { value: 0 },
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec2 vUv;
+          uniform vec3 uColor;
+          uniform float uOpacity;
+
+          void main() {
+            vec2 p = (vUv - 0.5) * 2.0;
+            float radius = length(p);
+            float core = exp(-radius * 16.0);
+            float halo = exp(-radius * 4.8) * 0.28;
+            float horizontal = exp(-abs(p.y) * 86.0)
+              * smoothstep(1.0, 0.08, abs(p.x));
+            float vertical = exp(-abs(p.x) * 92.0)
+              * smoothstep(1.0, 0.06, abs(p.y));
+            float diagonalA = exp(-abs(p.x - p.y) * 48.0)
+              * smoothstep(0.82, 0.02, radius) * 0.32;
+            float diagonalB = exp(-abs(p.x + p.y) * 48.0)
+              * smoothstep(0.82, 0.02, radius) * 0.32;
+            float energy = core * 1.8 + halo + horizontal + vertical
+              + diagonalA + diagonalB;
+            float alpha = energy * uOpacity * smoothstep(1.0, 0.68, radius);
+            gl_FragColor = vec4(uColor * (1.2 + energy * 1.6), alpha);
+          }
+        `,
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        blending: AdditiveBlending,
+        toneMapped: false,
+      }),
+    [color],
+  );
+  const flares = useMemo(
+    () =>
+      Array.from({ length: 18 }, (_, index) => ({
+        x: (seededRandom(index + 6100) - 0.5) * 8.4,
+        y: (seededRandom(index + 6200) - 0.5) * 4.8,
+        z: -seededRandom(index + 6300) * 18 + 2.2,
+        scale: 0.22 + seededRandom(index + 6400) * 0.86,
+      })),
+    [],
+  );
+  const materialRef = useRef(material);
+
+  useEffect(() => () => material.dispose(), [material]);
+
+  useFrame((state, delta) => {
+    const frameMaterial = materialRef.current;
+    const progress = storyState.current.progress;
+    const corridor = smoothRange(progress, 0.2, 0.3, 0.7, 0.78);
+    const vortex = smoothRange(progress, 0.68, 0.72, 0.84, 0.9);
+    const alpha = Math.max(corridor * 0.86, vortex);
+    frameMaterial.uniforms.uOpacity.value =
+      alpha *
+      (0.62 + Math.min(Math.abs(storyState.current.scrollVelocity), 1) * 0.48);
+    frameMaterial.uniforms.uColor.value.copy(
+      progress < 0.5
+        ? TUNNEL_WHITE
+        : progress < 0.66
+          ? TUNNEL_GREEN
+          : TUNNEL_MAGENTA,
+    );
+    if (!groupRef.current) return;
+    groupRef.current.visible = alpha > 0.01;
+    groupRef.current.position.x = MathUtils.damp(
+      groupRef.current.position.x,
+      reducedMotion ? 0 : -pointerTarget.current.x * 0.34,
+      4,
+      delta,
+    );
+    groupRef.current.position.y = MathUtils.damp(
+      groupRef.current.position.y,
+      reducedMotion ? 0 : -pointerTarget.current.y * 0.22,
+      4,
+      delta,
+    );
+    groupRef.current.quaternion.copy(state.camera.quaternion);
+  });
+
+  return (
+    <group ref={groupRef}>
+      {flares.map((flare, index) => (
+        <mesh
+          key={index}
+          position={[flare.x, flare.y, flare.z]}
+          scale={[
+            flare.scale * (1.5 + (index % 3) * 0.45),
+            flare.scale,
+            1,
+          ]}
+          material={material}
+          renderOrder={6}
+        >
+          <planeGeometry args={[1, 1]} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function CinematicPostFX({
+  storyState,
+  reducedMotion,
+}: {
+  storyState: MutableRefObject<StoryState>;
+  reducedMotion: boolean;
+}) {
+  const chromaticOffset = useMemo(() => new Vector2(0.0007, 0.00035), []);
+  const { gl } = useThree();
+  const rendererRef = useRef(gl);
+
+  useEffect(
+    () => () => {
+      rendererRef.current.toneMappingExposure = 1;
+    },
+    [gl],
+  );
+
+  useFrame(() => {
+    const progress = storyState.current.progress;
+    const velocity = Math.min(
+      Math.abs(storyState.current.scrollVelocity),
+      1.4,
+    );
+    const vortexFlash = smoothRange(progress, 0.68, 0.74, 0.82, 0.89);
+    const roomFlash = smoothRange(progress, 0.79, 0.835, 0.9, 0.96);
+    const aberration = reducedMotion
+      ? 0.00025
+      : 0.00055 + velocity * 0.00115 + vortexFlash * 0.0008;
+    chromaticOffset.set(aberration, aberration * 0.46);
+    rendererRef.current.toneMappingExposure =
+      0.88 + vortexFlash * 0.18 + roomFlash * 0.24 + velocity * 0.08;
+  });
+
+  return (
+    <EffectComposer multisampling={0} resolutionScale={0.84}>
+      <Bloom
+        mipmapBlur
+        intensity={1.72}
+        luminanceThreshold={0.24}
+        luminanceSmoothing={0.28}
+        radius={0.72}
+      />
+      <ChromaticAberration
+        offset={chromaticOffset}
+        radialModulation
+        modulationOffset={0.2}
+      />
+      <Noise
+        premultiply
+        blendFunction={BlendFunction.SOFT_LIGHT}
+        opacity={0.026}
+      />
+      <Vignette eskil={false} offset={0.12} darkness={0.52} />
+    </EffectComposer>
+  );
+}
+
 function StageBackgrounds({
   pointerTarget,
   storyState,
@@ -675,13 +694,28 @@ function StageBackgrounds({
   const engineeringRef = useRef<Group>(null);
   const leanmateRef = useRef<Group>(null);
   const voyaRef = useRef<Group>(null);
+  const shardRef = useRef<Group>(null);
   const contactFarRef = useRef<Group>(null);
   const contactMidRef = useRef<Group>(null);
   const contactFrontRef = useRef<Group>(null);
+  const contactStickerRef = useRef<Group>(null);
+  const corridorKeyLightRef = useRef<PointLight>(null);
+  const corridorFillLightRef = useRef<PointLight>(null);
+  const portalLightRef = useRef<PointLight>(null);
+  const lastContactClick = useRef(Number.NEGATIVE_INFINITY);
+  const contactKick = useRef(0);
   const { scene } = useThree();
+  const [corridorGltf, portalRoomGltf, portalShardsGltf] = useLoader(
+    GLTFLoader,
+    [
+      "/models/lusion-corridor-module-v02.glb",
+      "/models/lusion-portal-room-v02.glb",
+      "/models/lusion-portal-shards-v02.glb",
+    ],
+  );
   const contactStickerTextureSource = useLoader(
     TextureLoader,
-    "/projects/contact-stickers-foreground.png",
+    "/projects/contact-stickers-dense-v2.png",
   );
   const contactStickerTexture = useMemo(() => {
     const texture = contactStickerTextureSource.clone();
@@ -692,23 +726,44 @@ function StageBackgrounds({
 
   const tunnelFrames = useMemo(
     () =>
-      Array.from({ length: 18 }, (_, index) => ({
+      Array.from({ length: 24 }, (_, index) => ({
         z: -index * 1.1 + 2.5,
         twist: (index % 2 === 0 ? 1 : -1) * index * 0.018,
-        scale: 1 + index * 0.028,
+        scale: 1 + index * 0.004,
       })),
     [],
   );
   const tunnelBlocks = useMemo(
     () =>
-      Array.from({ length: 42 }, (_, index) => ({
+      Array.from({ length: 58 }, (_, index) => ({
         x: (seededRandom(index + 200) - 0.5) * 10.5,
         y: (seededRandom(index + 410) - 0.5) * 6.2,
-        z: -seededRandom(index + 630) * 16 + 3,
+        z: -seededRandom(index + 630) * 24 + 3,
         sx: 0.12 + seededRandom(index + 800) * 0.5,
         sy: 0.08 + seededRandom(index + 920) * 0.4,
         sz: 0.18 + seededRandom(index + 1030) * 1.2,
       })),
+    [],
+  );
+  const speedStreaks = useMemo(
+    () =>
+      Array.from({ length: 74 }, (_, index) => {
+        const side = seededRandom(index + 1110) > 0.5 ? 1 : -1;
+        const vertical = seededRandom(index + 1130) > 0.5;
+        const edge = 1.45 + seededRandom(index + 1160) * 2.65;
+        return {
+          x: vertical
+            ? side * edge
+            : (seededRandom(index + 1180) - 0.5) * 7.4,
+          y: vertical
+            ? (seededRandom(index + 1210) - 0.5) * 4.5
+            : side * (1.2 + seededRandom(index + 1240) * 1.3),
+          z: -seededRandom(index + 1270) * 25 + 3,
+          width: 0.012 + seededRandom(index + 1300) * 0.026,
+          length: 0.5 + seededRandom(index + 1330) * 2.8,
+          warm: index % 4 === 0,
+        };
+      }),
     [],
   );
   const constellation = useMemo(
@@ -719,6 +774,29 @@ function StageBackgrounds({
         z: -seededRandom(index + 1680) * 7 - 0.5,
         size: 0.025 + seededRandom(index + 1820) * 0.07,
       })),
+    [],
+  );
+  const portalShards = useMemo(
+    () =>
+      Array.from({ length: 58 }, (_, index) => {
+        const angle = seededRandom(index + 3110) * Math.PI * 2;
+        const radius = 0.55 + seededRandom(index + 3150) * 2.65;
+        const verticalBias = (seededRandom(index + 3190) - 0.5) * 3.9;
+        return {
+          x: Math.cos(angle) * radius,
+          y: Math.sin(angle) * radius * 0.56 + verticalBias * 0.42,
+          z: -1.4 - seededRandom(index + 3230) * 3.6,
+          dx: Math.cos(angle) * (1.4 + seededRandom(index + 3270) * 3.8),
+          dy:
+            Math.sin(angle) * (0.9 + seededRandom(index + 3310) * 2.6) +
+            verticalBias * 0.38,
+          dz: 1.3 + seededRandom(index + 3350) * 5.8,
+          scale: 0.12 + seededRandom(index + 3390) * 0.38,
+          rx: seededRandom(index + 3430) * Math.PI,
+          ry: seededRandom(index + 3470) * Math.PI,
+          rz: seededRandom(index + 3510) * Math.PI,
+        };
+      }),
     [],
   );
   const contactObjects = useMemo(
@@ -740,9 +818,9 @@ function StageBackgrounds({
       tunnel: new MeshStandardMaterial({
         color: "#11181a",
         emissive: "#101d13",
-        emissiveIntensity: 0.44,
-        roughness: 0.62,
-        metalness: 0.58,
+        emissiveIntensity: 0.62,
+        roughness: 0.28,
+        metalness: 0.64,
         transparent: true,
       }),
       tunnelLight: new MeshBasicMaterial({
@@ -753,8 +831,50 @@ function StageBackgrounds({
         blending: AdditiveBlending,
         toneMapped: false,
       }),
+      tunnelLightSecondary: new MeshBasicMaterial({
+        color: "#55e9ff",
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        blending: AdditiveBlending,
+        toneMapped: false,
+      }),
+      tunnelGlass: new MeshPhysicalMaterial({
+        color: "#bceeff",
+        emissive: "#153244",
+        emissiveIntensity: 0.4,
+        roughness: 0.08,
+        metalness: 0.08,
+        transmission: 0.86,
+        thickness: 0.34,
+        ior: 1.42,
+        dispersion: 0.62,
+        iridescence: 0.28,
+        iridescenceIOR: 1.34,
+        iridescenceThicknessRange: [120, 540],
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: DoubleSide,
+      }),
+      speedCool: new MeshBasicMaterial({
+        color: "#78e8ff",
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        blending: AdditiveBlending,
+        toneMapped: false,
+      }),
+      speedWarm: new MeshBasicMaterial({
+        color: "#ff4f92",
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        blending: AdditiveBlending,
+        toneMapped: false,
+      }),
       leanShell: new MeshBasicMaterial({
-        color: "#61dda0",
+        color: "#ff2f9f",
         wireframe: true,
         transparent: true,
         opacity: 0,
@@ -763,7 +883,7 @@ function StageBackgrounds({
         toneMapped: false,
       }),
       leanNode: new MeshBasicMaterial({
-        color: "#9ff2c5",
+        color: "#ffb6ec",
         transparent: true,
         opacity: 0,
         depthWrite: false,
@@ -771,7 +891,7 @@ function StageBackgrounds({
         toneMapped: false,
       }),
       voyaRing: new MeshBasicMaterial({
-        color: "#8b64ff",
+        color: "#55b8ff",
         transparent: true,
         opacity: 0,
         depthWrite: false,
@@ -779,12 +899,62 @@ function StageBackgrounds({
         toneMapped: false,
       }),
       voyaCore: new MeshBasicMaterial({
-        color: "#3e9dff",
+        color: "#b8e8ff",
         transparent: true,
         opacity: 0,
         depthWrite: false,
         blending: AdditiveBlending,
         toneMapped: false,
+      }),
+      portalSurface: new MeshPhysicalMaterial({
+        color: "#0626e7",
+        emissive: "#071b93",
+        emissiveIntensity: 1.35,
+        roughness: 0.2,
+        metalness: 0.12,
+        transmission: 0.12,
+        thickness: 0.46,
+        ior: 1.34,
+        dispersion: 0.24,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: DoubleSide,
+      }),
+      portalPattern: new MeshBasicMaterial({
+        color: "#b8c5ff",
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: DoubleSide,
+        toneMapped: false,
+      }),
+      portalCore: new MeshBasicMaterial({
+        color: "#cde7ff",
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: DoubleSide,
+        blending: AdditiveBlending,
+        toneMapped: false,
+      }),
+      shardGlass: new MeshPhysicalMaterial({
+        color: "#83d9ff",
+        emissive: "#1668d6",
+        emissiveIntensity: 1.1,
+        roughness: 0.045,
+        metalness: 0.08,
+        transmission: 0.82,
+        thickness: 0.32,
+        ior: 1.46,
+        dispersion: 0.78,
+        iridescence: 0.4,
+        iridescenceIOR: 1.42,
+        iridescenceThicknessRange: [90, 620],
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: DoubleSide,
       }),
       contactFar: new MeshStandardMaterial({
         color: "#70808c",
@@ -816,28 +986,103 @@ function StageBackgrounds({
     }),
     [],
   );
+  const corridorModuleAsset = useMemo(
+    () =>
+      mergeAssetByMaterial(corridorGltf.scene, (name) => {
+        if (name.includes("Glass")) return materials.tunnelGlass;
+        if (name.includes("Light_A")) return materials.tunnelLight;
+        if (name.includes("Light_B")) return materials.tunnelLightSecondary;
+        return materials.tunnel;
+      }),
+    [corridorGltf.scene, materials],
+  );
+  const corridorModules = useMemo(
+    () =>
+      tunnelFrames.map(() => corridorModuleAsset.clone(true)),
+    [corridorModuleAsset, tunnelFrames],
+  );
+  const portalRoomAsset = useMemo(
+    () =>
+      mergeAssetByMaterial(portalRoomGltf.scene, (name) => {
+        if (name.includes("CoreRing")) return null;
+        if (name.includes("Pattern")) return materials.portalPattern;
+        if (
+          name.includes("Aperture") ||
+          name.includes("Core") ||
+          name.includes("BackReflector")
+        ) {
+          return materials.portalCore;
+        }
+        return materials.portalSurface;
+      }),
+    [materials, portalRoomGltf.scene],
+  );
+  const portalShardGeometries = useMemo(() => {
+    const geometries: BufferGeometry[] = [];
+    portalShardsGltf.scene.traverse((object) => {
+      if (object instanceof Mesh) geometries.push(object.geometry.clone());
+    });
+    return geometries;
+  }, [portalShardsGltf.scene]);
   const materialsRef = useRef(materials);
   const sceneRef = useRef(scene);
-  const stickerMaterial = useMemo(
+  const stickerTiles = useMemo(
     () =>
-      new MeshBasicMaterial({
-        map: contactStickerTexture,
-        transparent: true,
-        opacity: 0,
-        depthWrite: false,
-        toneMapped: false,
+      [
+        { offset: [0, 0.5], position: [-2.975, 1.6725] },
+        { offset: [0.5, 0.5], position: [2.975, 1.6725] },
+        { offset: [0, 0], position: [-2.975, -1.6725] },
+        { offset: [0.5, 0], position: [2.975, -1.6725] },
+      ].map((tile, index) => {
+        const texture = contactStickerTexture.clone();
+        texture.repeat.set(0.5, 0.5);
+        texture.offset.set(tile.offset[0], tile.offset[1]);
+        texture.needsUpdate = true;
+        return {
+          ...tile,
+          kick: [
+            (index % 2 === 0 ? -1 : 1) * (0.5 + index * 0.08),
+            (index < 2 ? 1 : -1) * (0.3 + index * 0.05),
+            (index % 2 === 0 ? -1 : 1) * 0.13,
+          ],
+          material: new MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false,
+            toneMapped: false,
+          }),
+          texture,
+        };
       }),
     [contactStickerTexture],
   );
-  const stickerMaterialRef = useRef(stickerMaterial);
+  const stickerTilesRef = useRef(stickerTiles);
 
   useEffect(
     () => () => {
       Object.values(materials).forEach((material) => material.dispose());
-      stickerMaterial.dispose();
+      corridorModuleAsset.traverse((object) => {
+        if (object instanceof Mesh) object.geometry.dispose();
+      });
+      portalRoomAsset.traverse((object) => {
+        if (object instanceof Mesh) object.geometry.dispose();
+      });
+      portalShardGeometries.forEach((geometry) => geometry.dispose());
+      stickerTiles.forEach((tile) => {
+        tile.material.dispose();
+        tile.texture.dispose();
+      });
       contactStickerTexture.dispose();
     },
-    [contactStickerTexture, materials, stickerMaterial],
+    [
+      contactStickerTexture,
+      corridorModuleAsset,
+      materials,
+      portalRoomAsset,
+      portalShardGeometries,
+      stickerTiles,
+    ],
   );
 
   useFrame((state, delta) => {
@@ -847,48 +1092,127 @@ function StageBackgrounds({
     const pointerX = reducedMotion ? 0 : pointerTarget.current.x;
     const pointerY = reducedMotion ? 0 : pointerTarget.current.y;
     const velocity = storyState.current.scrollVelocity;
-    const engineeringAlpha = smoothRange(progress, 1.12, 1.75, 2.3, 2.92);
-    const leanmateAlpha = smoothRange(progress, 2.15, 2.7, 3.3, 3.92);
-    const voyaAlpha = smoothRange(progress, 3.12, 3.7, 4.3, 4.9);
-    const contactAlpha = MathUtils.smoothstep(progress, 4.16, 4.88);
+    const engineeringAlpha = smoothRange(
+      progress,
+      0.22,
+      0.29,
+      0.7,
+      0.79,
+    );
+    const leanmateAlpha = smoothRange(progress, 0.64, 0.685, 0.75, 0.81);
+    const voyaAlpha = smoothRange(progress, 0.68, 0.715, 0.77, 0.815);
+    const blueRoomAlpha = smoothRange(progress, 0.775, 0.815, 0.925, 0.97);
+    const shardAlpha = smoothRange(progress, 0.685, 0.72, 0.785, 0.835);
+    const shardBurst = MathUtils.smoothstep(progress, 0.72, 0.81);
+    const contactAlpha = MathUtils.smoothstep(progress, 0.88, 0.97);
 
-    const paletteIndex = Math.min(4, Math.floor(progress));
-    const paletteT = MathUtils.clamp(progress - paletteIndex, 0, 1);
-    const colors = [
-      PALETTE.hero,
-      PALETTE.about,
-      PALETTE.engineering,
-      PALETTE.leanmate,
-      PALETTE.voya,
-      PALETTE.contact,
-    ];
-    TMP_COLOR_A.copy(colors[paletteIndex]);
-    TMP_COLOR_B.copy(colors[paletteIndex + 1]);
+    sampleTimelineBackground(progress, TIMELINE_BACKGROUND);
     if (frameScene.background instanceof Color) {
-      frameScene.background.lerpColors(TMP_COLOR_A, TMP_COLOR_B, paletteT);
+      frameScene.background.copy(TIMELINE_BACKGROUND);
     }
     if (frameScene.fog) {
-      frameScene.fog.color.lerpColors(TMP_COLOR_A, TMP_COLOR_B, paletteT);
+      frameScene.fog.color.copy(TIMELINE_BACKGROUND);
     }
 
-    frameMaterials.tunnel.opacity = engineeringAlpha;
-    frameMaterials.tunnelLight.opacity = engineeringAlpha * 0.78;
+    const redBlend = MathUtils.smoothstep(progress, 0.46, 0.56);
+    const greenBlend = MathUtils.smoothstep(progress, 0.57, 0.64);
+    const magentaBlend = MathUtils.smoothstep(progress, 0.65, 0.72);
+    if (progress < 0.57) {
+      frameMaterials.tunnel.color.lerpColors(
+        TUNNEL_DARK,
+        TUNNEL_RED_DARK,
+        redBlend,
+      );
+      frameMaterials.tunnel.emissive.lerpColors(
+        TUNNEL_WHITE_EMISSIVE,
+        TUNNEL_RED_EMISSIVE,
+        redBlend,
+      );
+      frameMaterials.tunnelLight.color.lerpColors(
+        TUNNEL_WHITE,
+        TUNNEL_RED,
+        redBlend,
+      );
+      frameMaterials.tunnelLightSecondary.color.lerpColors(
+        TUNNEL_WHITE,
+        TUNNEL_CYAN,
+        redBlend,
+      );
+    } else if (progress < 0.65) {
+      frameMaterials.tunnel.color.lerpColors(
+        TUNNEL_RED_DARK,
+        TUNNEL_GREEN_DARK,
+        greenBlend,
+      );
+      frameMaterials.tunnel.emissive.lerpColors(
+        TUNNEL_RED_EMISSIVE,
+        TUNNEL_GREEN_EMISSIVE,
+        greenBlend,
+      );
+      frameMaterials.tunnelLight.color.lerpColors(
+        TUNNEL_RED,
+        TUNNEL_GREEN,
+        greenBlend,
+      );
+      frameMaterials.tunnelLightSecondary.color.lerpColors(
+        TUNNEL_CYAN,
+        TUNNEL_GREEN,
+        greenBlend,
+      );
+    } else {
+      frameMaterials.tunnel.color.lerpColors(
+        TUNNEL_GREEN_DARK,
+        TUNNEL_MAGENTA_DARK,
+        magentaBlend,
+      );
+      frameMaterials.tunnel.emissive.lerpColors(
+        TUNNEL_GREEN_EMISSIVE,
+        TUNNEL_MAGENTA_EMISSIVE,
+        magentaBlend,
+      );
+      frameMaterials.tunnelLight.color.lerpColors(
+        TUNNEL_GREEN,
+        TUNNEL_MAGENTA,
+        magentaBlend,
+      );
+      frameMaterials.tunnelLightSecondary.color.lerpColors(
+        TUNNEL_GREEN,
+        TUNNEL_RED,
+        magentaBlend,
+      );
+    }
+
+    frameMaterials.tunnel.opacity = engineeringAlpha * 0.72;
+    frameMaterials.tunnelLight.opacity = engineeringAlpha * 0.48;
+    frameMaterials.tunnelLightSecondary.opacity = engineeringAlpha * 0.42;
+    frameMaterials.tunnelGlass.opacity = engineeringAlpha * 0.14;
+    frameMaterials.speedCool.opacity =
+      engineeringAlpha * (0.22 + Math.min(Math.abs(velocity), 1) * 0.42);
+    frameMaterials.speedWarm.opacity =
+      engineeringAlpha *
+      MathUtils.smoothstep(progress, 0.46, 0.58) *
+      (0.16 + Math.min(Math.abs(velocity), 1) * 0.34);
     frameMaterials.leanShell.opacity = leanmateAlpha * 0.28;
     frameMaterials.leanNode.opacity = leanmateAlpha * 0.86;
-    frameMaterials.voyaRing.opacity = voyaAlpha * 0.34;
-    frameMaterials.voyaCore.opacity = voyaAlpha * 0.6;
+    frameMaterials.voyaRing.opacity = voyaAlpha * 0.2;
+    frameMaterials.voyaCore.opacity = voyaAlpha * 0.38;
+    frameMaterials.portalSurface.opacity = blueRoomAlpha * 0.96;
+    frameMaterials.portalPattern.opacity = blueRoomAlpha * 0.86;
+    frameMaterials.portalCore.opacity = blueRoomAlpha * 0.94;
+    frameMaterials.shardGlass.opacity = shardAlpha * 0.76;
     frameMaterials.contactFar.opacity = contactAlpha * 0.42;
     frameMaterials.contactMid.opacity = contactAlpha * 0.66;
     frameMaterials.contactFront.opacity = contactAlpha * 0.84;
-    stickerMaterialRef.current.opacity = contactAlpha * 0.96;
+    stickerTilesRef.current.forEach((tile) => {
+      tile.material.opacity = contactAlpha;
+    });
 
     if (engineeringRef.current) {
       engineeringRef.current.visible = engineeringAlpha > 0.01;
-      engineeringRef.current.position.z =
-        (progress - 2) * 3.8 + velocity * 0.38;
+      engineeringRef.current.position.z = velocity * 0.34;
       engineeringRef.current.rotation.z = MathUtils.damp(
         engineeringRef.current.rotation.z,
-        pointerX * 0.025 + (progress - 2) * 0.08,
+        pointerX * 0.018 + (progress - 0.3) * 0.12,
         3,
         delta,
       );
@@ -906,6 +1230,38 @@ function StageBackgrounds({
       );
     }
 
+    const corridorLightZ = MathUtils.lerp(
+      5.8,
+      -9.2,
+      MathUtils.smoothstep(progress, 0.24, 0.76),
+    );
+    if (corridorKeyLightRef.current) {
+      corridorKeyLightRef.current.visible = engineeringAlpha > 0.01;
+      corridorKeyLightRef.current.position.set(
+        2.4 + pointerX * 0.25,
+        1.35 + pointerY * 0.18,
+        corridorLightZ,
+      );
+      corridorKeyLightRef.current.color.copy(
+        frameMaterials.tunnelLight.color,
+      );
+      corridorKeyLightRef.current.intensity =
+        engineeringAlpha * (8.6 + Math.min(Math.abs(velocity), 1) * 4.2);
+    }
+    if (corridorFillLightRef.current) {
+      corridorFillLightRef.current.visible = engineeringAlpha > 0.01;
+      corridorFillLightRef.current.position.set(
+        -2.6 - pointerX * 0.2,
+        -1.2 - pointerY * 0.16,
+        corridorLightZ - 1.7,
+      );
+      corridorFillLightRef.current.color.copy(
+        frameMaterials.tunnelLightSecondary.color,
+      );
+      corridorFillLightRef.current.intensity =
+        engineeringAlpha * (6.2 + Math.min(Math.abs(velocity), 1) * 3.1);
+    }
+
     if (leanmateRef.current) {
       leanmateRef.current.visible = leanmateAlpha > 0.01;
       leanmateRef.current.position.x = MathUtils.damp(
@@ -920,13 +1276,13 @@ function StageBackgrounds({
         3.5,
         delta,
       );
-      leanmateRef.current.rotation.y += reducedMotion ? 0 : delta * 0.06;
+      leanmateRef.current.rotation.y += reducedMotion ? 0 : delta * 0.08;
       leanmateRef.current.rotation.z =
-        (progress - 3) * 0.22 + pointerX * 0.035;
+        (progress - 0.68) * 1.2 + pointerX * 0.035;
     }
 
     if (voyaRef.current) {
-      voyaRef.current.visible = voyaAlpha > 0.01;
+      voyaRef.current.visible = Math.max(voyaAlpha, blueRoomAlpha) > 0.01;
       voyaRef.current.position.x = MathUtils.damp(
         voyaRef.current.position.x,
         -pointerX * 0.42,
@@ -939,9 +1295,88 @@ function StageBackgrounds({
         4,
         delta,
       );
-      voyaRef.current.position.z = (progress - 4) * 4.5;
-      voyaRef.current.rotation.z +=
-        reducedMotion ? 0 : delta * (0.08 + Math.abs(velocity) * 0.12);
+      voyaRef.current.rotation.z = MathUtils.damp(
+        voyaRef.current.rotation.z,
+        reducedMotion
+          ? 0
+          : pointerX * 0.018 + (progress - 0.82) * 0.065,
+        3.4,
+        delta,
+      );
+    }
+    if (portalLightRef.current) {
+      portalLightRef.current.visible =
+        Math.max(voyaAlpha, blueRoomAlpha) > 0.01;
+      portalLightRef.current.position.set(
+        1.2 + pointerX * 0.5,
+        0.8 + pointerY * 0.3,
+        2.2,
+      );
+      portalLightRef.current.intensity =
+        Math.max(voyaAlpha, blueRoomAlpha) * (7.8 + shardBurst * 4.2);
+    }
+
+    if (shardRef.current) {
+      shardRef.current.visible = shardAlpha > 0.01;
+      shardRef.current.position.x = -pointerX * 0.18;
+      shardRef.current.position.y = -pointerY * 0.12;
+      shardRef.current.children.forEach((child, index) => {
+        const shard = portalShards[index];
+        if (!shard) return;
+        const delay = MathUtils.clamp(
+          shardBurst * 1.35 - (index % 9) * 0.035,
+          0,
+          1,
+        );
+        const easedBurst = delay * delay * (3 - 2 * delay);
+        child.position.set(
+          shard.x + shard.dx * easedBurst,
+          shard.y + shard.dy * easedBurst,
+          shard.z + shard.dz * easedBurst,
+        );
+        child.rotation.set(
+          shard.rx + easedBurst * (1.8 + (index % 4) * 0.34),
+          shard.ry + easedBurst * (2.2 + (index % 5) * 0.29),
+          shard.rz + easedBurst * (1.4 + (index % 3) * 0.42),
+        );
+      });
+    }
+
+    if (
+      contactAlpha > 0.12 &&
+      pointerTarget.current.clickAt > lastContactClick.current
+    ) {
+      lastContactClick.current = pointerTarget.current.clickAt;
+      contactKick.current = 1;
+    }
+    contactKick.current = MathUtils.damp(
+      contactKick.current,
+      0,
+      2.35,
+      delta,
+    );
+    if (contactStickerRef.current) {
+      contactStickerRef.current.children.forEach((child, index) => {
+        const tile = stickerTiles[index];
+        if (!tile) return;
+        const wobble = contactKick.current;
+        child.position.set(
+          tile.position[0] +
+            tile.kick[0] * wobble +
+            Math.sin(state.clock.elapsedTime * (5.4 + index)) *
+              wobble *
+              0.08,
+          tile.position[1] +
+            tile.kick[1] * wobble +
+            Math.cos(state.clock.elapsedTime * (4.9 + index * 0.7)) *
+              wobble *
+              0.06,
+          tile.kick[2] * wobble,
+        );
+        child.rotation.z =
+          tile.kick[2] * wobble +
+          Math.sin(state.clock.elapsedTime * 0.22 + index) * 0.004;
+      });
     }
 
     const parallaxTargets = [
@@ -964,25 +1399,35 @@ function StageBackgrounds({
       group.visible = contactAlpha > 0.01;
       group.position.x = MathUtils.damp(
         group.position.x,
-        -pointerX * factor,
+        -pointerX * factor +
+          Math.sin(state.clock.elapsedTime * (9 + index * 2.1)) *
+            contactKick.current *
+            factor *
+            0.7,
         4.2 - index * 0.35,
         delta,
       );
       group.position.y = MathUtils.damp(
         group.position.y,
-        -pointerY * factor * 0.64,
+        -pointerY * factor * 0.64 +
+          Math.cos(state.clock.elapsedTime * (8 + index * 1.7)) *
+            contactKick.current *
+            factor *
+            0.46,
         4.2 - index * 0.35,
         delta,
       );
       group.rotation.y = MathUtils.damp(
         group.rotation.y,
-        pointerX * factor * 0.05,
+        pointerX * factor * 0.05 +
+          contactKick.current * factor * (index % 2 === 0 ? 0.18 : -0.14),
         3.8,
         delta,
       );
       group.rotation.x = MathUtils.damp(
         group.rotation.x,
-        -pointerY * factor * 0.035,
+        -pointerY * factor * 0.035 +
+          contactKick.current * factor * (index - 1) * 0.12,
         3.8,
         delta,
       );
@@ -999,6 +1444,27 @@ function StageBackgrounds({
 
   return (
     <>
+      <pointLight
+        ref={corridorKeyLightRef}
+        color="#eaf7ff"
+        intensity={0}
+        distance={12}
+        decay={1.45}
+      />
+      <pointLight
+        ref={corridorFillLightRef}
+        color="#55e9ff"
+        intensity={0}
+        distance={11}
+        decay={1.55}
+      />
+      <pointLight
+        ref={portalLightRef}
+        color="#3c94ff"
+        intensity={0}
+        distance={14}
+        decay={1.35}
+      />
       <group ref={engineeringRef}>
         {tunnelFrames.map((frame, index) => (
           <group
@@ -1007,34 +1473,7 @@ function StageBackgrounds({
             rotation={[0, 0, frame.twist]}
             scale={frame.scale}
           >
-            <mesh position={[0, 2.55, 0]} material={materials.tunnel}>
-              <boxGeometry args={[8.6, 0.1, 0.08]} />
-            </mesh>
-            <mesh position={[0, -2.55, 0]} material={materials.tunnel}>
-              <boxGeometry args={[8.6, 0.1, 0.08]} />
-            </mesh>
-            <mesh position={[-4.25, 0, 0]} material={materials.tunnel}>
-              <boxGeometry args={[0.1, 5.2, 0.08]} />
-            </mesh>
-            <mesh position={[4.25, 0, 0]} material={materials.tunnel}>
-              <boxGeometry args={[0.1, 5.2, 0.08]} />
-            </mesh>
-            {index % 2 === 0 && (
-              <>
-                <mesh
-                  position={[-3.1, 2.42, 0.08]}
-                  material={materials.tunnelLight}
-                >
-                  <boxGeometry args={[0.52, 0.03, 0.03]} />
-                </mesh>
-                <mesh
-                  position={[3.1, -2.42, 0.08]}
-                  material={materials.tunnelLight}
-                >
-                  <boxGeometry args={[0.52, 0.03, 0.03]} />
-                </mesh>
-              </>
-            )}
+            <primitive object={corridorModules[index]} dispose={null} />
           </group>
         ))}
         {tunnelBlocks.map((block, index) => (
@@ -1047,31 +1486,37 @@ function StageBackgrounds({
             <boxGeometry />
           </mesh>
         ))}
+        {speedStreaks.map((streak, index) => (
+          <mesh
+            key={`streak-${index}`}
+            position={[streak.x, streak.y, streak.z]}
+            scale={[streak.width, streak.width, streak.length]}
+            material={
+              streak.warm ? materials.speedWarm : materials.speedCool
+            }
+          >
+            <boxGeometry />
+          </mesh>
+        ))}
       </group>
 
-      <group ref={leanmateRef} position={[0.5, 0, -1.8]}>
-        {[0, 1, 2].map((index) => (
-          <group
+      <group ref={leanmateRef} position={[0, 0, -20.5]}>
+        {Array.from({ length: 18 }, (_, index) => (
+          <mesh
             key={index}
-            position={[(index - 1) * 2.35, (index % 2) * 0.35 - 0.18, -index * 0.8]}
-            scale={1 - index * 0.12}
+            position={[0, 0, -index * 0.34]}
+            rotation={[
+              Math.sin(index * 0.67) * 0.13,
+              Math.cos(index * 0.51) * 0.12,
+              index * 0.17,
+            ]}
+            scale={1 + index * 0.085}
+            material={index % 3 === 0 ? materials.leanNode : materials.leanShell}
           >
-            <mesh material={materials.leanShell}>
-              <sphereGeometry args={[1.42, 26, 18]} />
-            </mesh>
-            <mesh
-              rotation={[Math.PI / 2.55, index * 0.3, 0]}
-              material={materials.leanShell}
-            >
-              <torusGeometry args={[1.55, 0.012, 4, 80]} />
-            </mesh>
-            <mesh
-              rotation={[0.2, Math.PI / 2.4, index * 0.4]}
-              material={materials.leanShell}
-            >
-              <torusGeometry args={[1.1, 0.008, 4, 64]} />
-            </mesh>
-          </group>
+            <torusGeometry
+              args={[1.62, index % 3 === 0 ? 0.045 : 0.018, 5, 96]}
+            />
+          </mesh>
         ))}
         {constellation.map((node, index) => (
           <mesh
@@ -1087,28 +1532,58 @@ function StageBackgrounds({
 
       <group
         ref={voyaRef}
-        position={[-0.3, 0, -1.8]}
-        rotation={[0.15, 0.2, 0]}
+        position={[0, 0, -1.8]}
+        rotation={[0.02, 0.04, 0]}
         scale={1.4}
       >
-        {Array.from({ length: 14 }, (_, index) => (
+        <group position={[0, 0, -20]} scale={2.2}>
+          {Array.from({ length: 14 }, (_, index) => (
+            <mesh
+              key={index}
+              position={[0, 0, -index * 0.55]}
+              rotation={[
+                Math.sin(index * 0.7) * 0.08,
+                Math.cos(index * 0.56) * 0.08,
+                index * 0.18,
+              ]}
+              scale={1 + index * 0.092}
+              material={index % 3 === 0 ? materials.voyaCore : materials.voyaRing}
+            >
+              <torusGeometry
+                args={[1.5, index % 3 === 0 ? 0.035 : 0.015, 5, 92]}
+              />
+            </mesh>
+          ))}
+          <mesh position={[0, 0, -5.6]} material={materials.voyaCore}>
+            <boxGeometry args={[1.3, 1.3, 0.08]} />
+          </mesh>
+        </group>
+        <primitive
+          object={portalRoomAsset}
+          position={[0, 0, -0.35]}
+          scale={1.45}
+          dispose={null}
+        />
+      </group>
+
+      <group ref={shardRef} position={[0, 0, -20.4]} scale={1.8}>
+        {portalShards.map((shard, index) => (
           <mesh
-            key={index}
-            position={[0, 0, -index * 0.55]}
-            rotation={[
-              Math.PI / 2 + Math.sin(index * 0.7) * 0.2,
-              Math.cos(index * 0.56) * 0.3,
-              index * 0.24,
+            key={`portal-shard-${index}`}
+            position={[shard.x, shard.y, shard.z]}
+            rotation={[shard.rx, shard.ry, shard.rz]}
+            scale={[
+              shard.scale * (2.1 + (index % 3) * 0.42),
+              shard.scale * (3.2 + (index % 5) * 0.38),
+              shard.scale * 0.82,
             ]}
-            scale={1 + index * 0.075}
-            material={index % 3 === 0 ? materials.voyaCore : materials.voyaRing}
+            material={materials.shardGlass}
+            geometry={
+              portalShardGeometries[index % portalShardGeometries.length]
+            }
           >
-            <torusGeometry args={[1.5, index % 3 === 0 ? 0.035 : 0.015, 5, 92]} />
           </mesh>
         ))}
-        <mesh position={[0, 0, -6.5]} material={materials.voyaCore}>
-          <sphereGeometry args={[0.34, 18, 12]} />
-        </mesh>
       </group>
 
       <group ref={contactFarRef} position={[0.2, 0, -3]}>
@@ -1150,9 +1625,18 @@ function StageBackgrounds({
         ))}
       </group>
       <group ref={contactFrontRef} position={[0, 0, 1.4]}>
-        <mesh position={[0, 0, -0.35]} material={stickerMaterial}>
-          <planeGeometry args={[10.35, 5.175]} />
-        </mesh>
+        <group ref={contactStickerRef} position={[0, 0, -0.35]}>
+          {stickerTiles.map((tile, index) => (
+            <mesh
+              key={`sticker-tile-${index}`}
+              position={[tile.position[0], tile.position[1], 0]}
+              material={tile.material}
+              renderOrder={8 + index}
+            >
+              <planeGeometry args={[5.95, 3.345]} />
+            </mesh>
+          ))}
+        </group>
         {contactObjects.slice(20).map((item, index) => (
           <mesh
             key={index}
@@ -1251,6 +1735,7 @@ function ExperienceModels({
   } | null>(null);
   const { camera, size } = useThree();
   const cameraRef = useRef(camera);
+  const timelineSample = useRef(createMasterTimelineSample());
 
   const [astronautGltf, stationGltf] = useLoader(GLTFLoader, [
     "/models/astronaut-lusion-animated.glb",
@@ -1344,13 +1829,16 @@ function ExperienceModels({
     const orbitLabels = Array.from(
       document.querySelectorAll<HTMLElement>("[data-orbit-label]"),
     );
+    const sceneFlash =
+      document.querySelector<HTMLElement>("[data-scene-flash]");
     const progressProxy = { value: 0 };
 
     const syncDom = (progress: number) => {
+      const stageProgress = progress * (DOM_STAGE_COUNT - 1);
       const activeStage = MathUtils.clamp(
-        Math.round(progress),
+        Math.round(stageProgress),
         0,
-        STAGE_COUNT - 1,
+        DOM_STAGE_COUNT - 1,
       );
       storyState.current.activeStage = activeStage;
       markers.forEach((marker, index) => {
@@ -1361,15 +1849,22 @@ function ExperienceModels({
         label.classList.toggle("is-active", labelStage === activeStage);
       });
       stageCopies.forEach((copy, index) => {
-        const distance = Math.abs(progress - index);
+        const distance = Math.abs(stageProgress - index);
         const alpha = reducedMotion
           ? 1
           : MathUtils.clamp(1.03 - distance * 1.4, 0.06, 1);
         gsap.set(copy, {
           autoAlpha: alpha,
-          y: reducedMotion ? 0 : (index - progress) * 36,
+          y: reducedMotion ? 0 : (index - stageProgress) * 36,
         });
       });
+      if (sceneFlash) {
+        const flashAlpha = smoothRange(progress, 0.72, 0.752, 0.762, 0.805);
+        gsap.set(sceneFlash, {
+          opacity: reducedMotion ? 0 : flashAlpha * 0.36,
+          scale: 1 + flashAlpha * 0.06,
+        });
+      }
     };
 
     const context = gsap.context(() => {
@@ -1377,7 +1872,7 @@ function ExperienceModels({
       if (reducedMotion) return;
 
       gsap.to(progressProxy, {
-        value: STAGE_COUNT - 1,
+        value: 1,
         ease: "none",
         scrollTrigger: {
           trigger: story,
@@ -1386,8 +1881,7 @@ function ExperienceModels({
           scrub: 0.68,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
-            storyState.current.progress =
-              self.progress * (STAGE_COUNT - 1);
+            storyState.current.progress = self.progress;
             storyState.current.scrollVelocity = MathUtils.clamp(
               self.getVelocity() / 1450,
               -1.65,
@@ -1454,28 +1948,14 @@ function ExperienceModels({
     );
 
     const progress = reducedMotion ? 0 : storyState.current.progress;
-    const pose = sampleStagePose(progress);
-    const { lower, upper, t } = pose;
+    const timeline = sampleMasterTimeline(progress, timelineSample.current);
     const pointer = pointerCurrent.current;
     const velocity = storyState.current.scrollVelocity;
-    const contactBlend = MathUtils.smoothstep(progress, 4.45, 4.95);
+    const contactBlend = MathUtils.smoothstep(progress, 0.9, 0.98);
 
-    astronautPath.position.set(
-      MathUtils.lerp(lower.astronaut.x, upper.astronaut.x, t),
-      MathUtils.lerp(lower.astronaut.y, upper.astronaut.y, t),
-      MathUtils.lerp(lower.astronaut.z, upper.astronaut.z, t),
-    );
-    astronautPath.rotation.set(
-      MathUtils.lerp(lower.astronaut.rx, upper.astronaut.rx, t),
-      MathUtils.lerp(lower.astronaut.ry, upper.astronaut.ry, t),
-      MathUtils.lerp(lower.astronaut.rz, upper.astronaut.rz, t),
-    );
-    const astronautScale = MathUtils.lerp(
-      lower.astronaut.scale,
-      upper.astronaut.scale,
-      t,
-    );
-    astronautPath.scale.setScalar(astronautScale);
+    astronautPath.position.copy(timeline.astronautPosition);
+    astronautPath.quaternion.copy(timeline.astronautQuaternion);
+    astronautPath.scale.setScalar(timeline.astronautScale * 2.45);
 
     astronautPointer.position.x = MathUtils.damp(
       astronautPointer.position.x,
@@ -1510,44 +1990,26 @@ function ExperienceModels({
 
     const cameraParallax = size.width < 900 ? 0.12 : 0.22;
     pathCamera.position.set(
-      MathUtils.lerp(lower.camera.x, upper.camera.x, t) +
-        pointer.x * cameraParallax,
-      MathUtils.lerp(lower.camera.y, upper.camera.y, t) +
-        pointer.y * cameraParallax * 0.62,
-      MathUtils.lerp(lower.camera.z, upper.camera.z, t) +
-        Math.abs(velocity) * 0.08,
+      timeline.cameraPosition.x + pointer.x * cameraParallax,
+      timeline.cameraPosition.y + pointer.y * cameraParallax * 0.62,
+      timeline.cameraPosition.z + Math.abs(velocity) * 0.08,
     );
     pathCamera.lookAt(
-      MathUtils.lerp(lower.camera.lookX, upper.camera.lookX, t) +
-        pointer.x * 0.045,
-      MathUtils.lerp(lower.camera.lookY, upper.camera.lookY, t) +
-        pointer.y * 0.03,
-      MathUtils.lerp(lower.camera.lookZ, upper.camera.lookZ, t),
+      timeline.cameraLookAt.x + pointer.x * 0.045,
+      timeline.cameraLookAt.y + pointer.y * 0.03,
+      timeline.cameraLookAt.z,
     );
-    const nextFov = MathUtils.lerp(lower.camera.fov, upper.camera.fov, t);
+    const nextFov = timeline.cameraFov;
     if (Math.abs(pathCamera.fov - nextFov) > 0.01) {
       pathCamera.fov = nextFov;
       pathCamera.updateProjectionMatrix();
     }
 
-    stationPath.position.set(
-      MathUtils.lerp(lower.station.x, upper.station.x, t),
-      MathUtils.lerp(lower.station.y, upper.station.y, t),
-      MathUtils.lerp(lower.station.z, upper.station.z, t),
-    );
-    stationPath.rotation.set(
-      MathUtils.lerp(lower.station.rx, upper.station.rx, t),
-      MathUtils.lerp(lower.station.ry, upper.station.ry, t),
-      MathUtils.lerp(lower.station.rz, upper.station.rz, t),
-    );
-    const stationScale = MathUtils.lerp(
-      lower.station.scale,
-      upper.station.scale,
-      t,
-    );
-    stationPath.scale.setScalar(stationScale);
+    stationPath.position.copy(timeline.stationPosition);
+    stationPath.quaternion.copy(timeline.stationQuaternion);
+    stationPath.scale.setScalar(timeline.stationScale);
     stationMaterialRef.current.opacity =
-      1 - MathUtils.smoothstep(progress, 1.2, 2.45);
+      1 - MathUtils.smoothstep(progress, 0.08, 0.24);
 
     if (!reducedMotion) {
       const elapsed = state.clock.elapsedTime;
@@ -1579,7 +2041,7 @@ function ExperienceModels({
       );
       applyAbsolutePoseAnimationLayer(
         actions.story,
-        progress / (STAGE_COUNT - 1),
+        progress,
       );
 
       const idleProgress =
@@ -1628,6 +2090,11 @@ function ExperienceModels({
         reducedMotion={reducedMotion}
       />
       <OrbitalLines storyState={storyState} />
+      <OpticalFlares
+        pointerTarget={pointerTarget}
+        storyState={storyState}
+        reducedMotion={reducedMotion}
+      />
       <StageBackgrounds
         pointerTarget={pointerTarget}
         storyState={storyState}
@@ -1645,6 +2112,10 @@ function ExperienceModels({
           </group>
         </group>
       </group>
+      <CinematicPostFX
+        storyState={storyState}
+        reducedMotion={reducedMotion}
+      />
     </>
   );
 }
@@ -1758,6 +2229,7 @@ export function EchoScene() {
           />
         </Suspense>
       </Canvas>
+      <div className="scene-flash" data-scene-flash aria-hidden="true" />
       <p className="scene-caption" aria-hidden="true">
         {sceneReady ? "MOTION SYSTEM ONLINE" : "LOADING MOTION SYSTEM"} · SCROLL /
         POINTER
