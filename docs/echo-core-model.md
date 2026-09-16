@@ -7,7 +7,7 @@ Echo Core 是个人主页的主视觉装置，用同一个结构承载前端工�
 - Blender 源文件：`design/3d/echo-core-v1.blend`
 - 网页模型：`public/models/echo-core-v1.glb`
 - 建模脚本：`scripts/blender/create_echo_core.py`
-- 预览图：`design/3d/previews/echo-core-v1-hero.png`
+- 本地生成预览图（Git 不跟踪）：`design/3d/previews/echo-core-v1-hero.png`
 
 ## 可动画结构
 

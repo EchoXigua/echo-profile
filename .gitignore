@@ -37,3 +37,11 @@ yarn-error.log*
 
 # typescript
 next-env.d.ts
+
+# Local QA renders, captures, references and archived exports
+/design/3d/previews/
+/design/qa/
+/design/reference/
+/design/archive/
+/design/raw-model/*.zip
+/output/*/

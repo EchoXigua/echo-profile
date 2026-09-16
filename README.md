@@ -59,4 +59,6 @@ pnpm build
 
 ## 当前状态
 
-基础架构已建立，并包含一个可运行的 3D 场景占位。项目使用标准 Next.js 静态导出，不依赖 Cloudflare Workers 或常驻 Node.js 服务。最终视觉、滚动动画、项目素材、联系方式、简历和正式域名将在后续阶段完善。
+六阶段滚动页面已建立：Hero、About、Engineering、LeanMate、Voya、Contact 共用一个 React Three Fiber 场景。宇航员骨骼动作、独立镜头路径、空间站状态和 DOM 文案随滚动同步；场景包含走廊、传送门、碎片与联系区贴纸，并使用自定义 Shader 和 Bloom 等后期效果。当前仍需完成移动端性能与交互验收。
+
+项目使用标准 Next.js 静态导出，不依赖 Cloudflare Workers 或常驻 Node.js 服务。模型历史验收及当前资产说明见 [`docs/model-acceptance-report.md`](docs/model-acceptance-report.md)，源文件与本地产物的管理规则见 [`docs/asset-management.md`](docs/asset-management.md)。

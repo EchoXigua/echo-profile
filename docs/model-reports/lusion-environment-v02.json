@@ -1,0 +1,262 @@
+{
+  "blender": "5.2.0 LTS",
+  "collections": {
+    "WEB_CorridorModule": {
+      "objects": 56,
+      "triangles": 672,
+      "materials": [
+        "Corridor_Glass",
+        "Corridor_Light_Cool",
+        "Corridor_Light_Warm",
+        "Corridor_Mirror"
+      ],
+      "modifiers": {
+        "Corridor_Frame_Top": [
+          "BEVEL"
+        ],
+        "Corridor_Frame_Bottom": [
+          "BEVEL"
+        ],
+        "Corridor_Frame_Left": [
+          "BEVEL"
+        ],
+        "Corridor_Frame_Right": [
+          "BEVEL"
+        ],
+        "Corridor_Brace_00": [
+          "BEVEL"
+        ],
+        "Corridor_Brace_01": [
+          "BEVEL"
+        ],
+        "Corridor_Brace_02": [
+          "BEVEL"
+        ],
+        "Corridor_Brace_03": [
+          "BEVEL"
+        ],
+        "Corridor_Glass_00": [
+          "BEVEL"
+        ],
+        "Corridor_Glass_01": [
+          "BEVEL"
+        ],
+        "Corridor_Glass_02": [
+          "BEVEL"
+        ],
+        "Corridor_Glass_03": [
+          "BEVEL"
+        ],
+        "Corridor_Glass_04": [
+          "BEVEL"
+        ],
+        "Corridor_Glass_05": [
+          "BEVEL"
+        ],
+        "Corridor_Glass_06": [
+          "BEVEL"
+        ],
+        "Corridor_Glass_07": [
+          "BEVEL"
+        ],
+        "Corridor_Light_A_00": [
+          "BEVEL"
+        ],
+        "Corridor_Light_B_01": [
+          "BEVEL"
+        ],
+        "Corridor_Light_A_02": [
+          "BEVEL"
+        ],
+        "Corridor_Light_B_03": [
+          "BEVEL"
+        ],
+        "Corridor_Light_A_04": [
+          "BEVEL"
+        ],
+        "Corridor_Light_B_05": [
+          "BEVEL"
+        ],
+        "Corridor_Light_A_06": [
+          "BEVEL"
+        ],
+        "Corridor_Light_B_07": [
+          "BEVEL"
+        ],
+        "Corridor_Light_A_08": [
+          "BEVEL"
+        ],
+        "Corridor_Light_B_09": [
+          "BEVEL"
+        ],
+        "Corridor_Light_A_10": [
+          "BEVEL"
+        ],
+        "Corridor_Light_B_11": [
+          "BEVEL"
+        ],
+        "Corridor_Light_A_12": [
+          "BEVEL"
+        ],
+        "Corridor_Light_B_13": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_00": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_01": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_02": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_03": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_04": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_05": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_06": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_07": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_08": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_09": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_10": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_11": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_12": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_13": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_14": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_15": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_16": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_17": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_18": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_19": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_20": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_21": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_22": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_23": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_24": [
+          "BEVEL"
+        ],
+        "Corridor_Reflector_25": [
+          "BEVEL"
+        ]
+      }
+    },
+    "WEB_PortalRoom": {
+      "objects": 52,
+      "triangles": 7180,
+      "materials": [
+        "Portal_Core",
+        "Portal_Organic",
+        "Portal_Pattern"
+      ],
+      "modifiers": {
+        "Portal_Room_Floor": [
+          "BEVEL"
+        ],
+        "Portal_Room_Ceiling": [
+          "BEVEL"
+        ],
+        "Portal_Room_Wall_L": [
+          "BEVEL"
+        ],
+        "Portal_Room_Wall_R": [
+          "BEVEL"
+        ],
+        "Portal_Aperture_00_L": [
+          "BEVEL"
+        ],
+        "Portal_Aperture_00_R": [
+          "BEVEL"
+        ],
+        "Portal_Aperture_01_L": [
+          "BEVEL"
+        ],
+        "Portal_Aperture_01_R": [
+          "BEVEL"
+        ],
+        "Portal_Aperture_02_L": [
+          "BEVEL"
+        ],
+        "Portal_Aperture_02_R": [
+          "BEVEL"
+        ],
+        "Portal_Aperture_03_L": [
+          "BEVEL"
+        ],
+        "Portal_Aperture_03_R": [
+          "BEVEL"
+        ],
+        "Portal_Aperture_04_L": [
+          "BEVEL"
+        ],
+        "Portal_Aperture_04_R": [
+          "BEVEL"
+        ],
+        "Portal_Aperture_05_L": [
+          "BEVEL"
+        ],
+        "Portal_BackReflector": [
+          "BEVEL"
+        ]
+      }
+    },
+    "WEB_PortalShards": {
+      "objects": 58,
+      "triangles": 232,
+      "materials": [
+        "Portal_ShardGlass"
+      ],
+      "modifiers": {}
+    }
+  },
+  "exports": {
+    "corridor": "public/models/lusion-corridor-module-v02.glb",
+    "portal": "public/models/lusion-portal-room-v02.glb",
+    "shards": "public/models/lusion-portal-shards-v02.glb"
+  },
+  "unresolved_intersections": [
+    "Structural corridor reflector blocks intentionally intersect their module frame.",
+    "Blue room shell intersections are limited to intentional architectural seams between floor, ceiling, and side walls.",
+    "Organic graphic rings are single continuous meshes and sit just above their host surfaces to avoid z-fighting."
+  ]
+}
